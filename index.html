@@ -157,6 +157,8 @@ body {
   <input class="name-input" id="nameInput" placeholder="给宠物起个名字..." maxlength="10">
   <br>
   <button class="start-btn" onclick="createPet()">开始冒险！🎉</button>
+  <br><br>
+  <button class="start-btn" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);font-size:15px;padding:12px 30px;" onclick="randomDraw()">🎲 随机抽取宠物！</button>
 </div>
 
 <!-- 宠物主界面 -->
@@ -288,6 +290,31 @@ function initChoices() {
     pet = JSON.parse(save);
     showGame();
   }
+}
+
+function randomDraw() {
+  const types = Object.keys(PETS);
+  const allChoices = document.querySelectorAll('.pet-choice');
+  let i = 0;
+  const speed = 80;
+  const rounds = 20 + Math.floor(Math.random() * 10);
+  const spin = setInterval(function() {
+    allChoices.forEach(x => x.classList.remove('selected'));
+    allChoices[i % allChoices.length].classList.add('selected');
+    i++;
+    if (i >= rounds) {
+      clearInterval(spin);
+      const winner = types[i % types.length];
+      const name = document.getElementById('nameInput').value.trim() || PETS[winner].emoji + '宝宝';
+      pet = {
+        name: name, type: winner, emoji: PETS[winner].emoji, trait: PETS[winner].trait,
+        hunger: 50, happy: 50, energy: 80, health: 100,
+        exp: 0, lv: 1, coins: 50, sleeping: false, count: 0, lastTime: Date.now()
+      };
+      showGame();
+      say('🎲 随机抽到了 ' + pet.emoji + ' ' + winner + '！名字叫 ' + pet.name + '！');
+    }
+  }, speed);
 }
 
 function createPet() {
