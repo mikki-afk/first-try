@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Buddy 宠物系统</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  color: #fff; min-height: 100vh; overflow-x: hidden;
+  display: flex; flex-direction: column; align-items: center;
+}
+.header {
+  text-align: center; padding: 20px;
+  font-size: 24px; font-weight: bold;
+}
+.header span { font-size: 28px; }
+.pet-area {
+  width: 90%; max-width: 400px; background: rgba(255,255,255,0.08);
+  border-radius: 24px; padding: 24px; margin: 10px 0;
+  backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+  text-align: center; position: relative;
+}
+.pet-display {
+  font-size: 80px; line-height: 1.2; margin: 10px 0;
+  animation: bounce 2s ease-in-out infinite;
+  cursor: pointer; user-select: none;
+}
+.pet-display.sleeping { animation: sleep 3s ease-in-out infinite; }
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes sleep {
+  0%,100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-3px) rotate(5deg); }
+}
+.speech {
+  background: rgba(255,255,255,0.15); border-radius: 16px;
+  padding: 12px 16px; margin: 10px 0; font-size: 14px;
+  min-height: 40px; transition: all 0.3s;
+}
+.pet-name { font-size: 20px; font-weight: bold; margin: 5px 0; }
+.pet-info { font-size: 13px; color: #aaa; margin-bottom: 10px; }
+.stats { width: 100%; margin: 15px 0; }
+.stat-row {
+  display: flex; align-items: center; margin: 6px 0; font-size: 13px;
+}
+.stat-label { width: 50px; text-align: right; margin-right: 8px; }
+.stat-bar {
+  flex: 1; height: 14px; background: rgba(255,255,255,0.1);
+  border-radius: 7px; overflow: hidden; position: relative;
+}
+.stat-fill {
+  height: 100%; border-radius: 7px; transition: width 0.5s ease;
+}
+.stat-val { width: 36px; text-align: right; margin-left: 6px; font-size: 12px; }
+.hunger-fill { background: linear-gradient(90deg, #ff6b6b, #ee5a24); }
+.happy-fill { background: linear-gradient(90deg, #ffd32a, #f6e58d); }
+.energy-fill { background: linear-gradient(90deg, #7bed9f, #2ed573); }
+.health-fill { background: linear-gradient(90deg, #70a1ff, #1e90ff); }
+.level-area {
+  display: flex; justify-content: space-around; margin: 10px 0;
+  font-size: 13px;
+}
+.level-area div {
+  background: rgba(255,255,255,0.1); padding: 6px 14px;
+  border-radius: 12px;
+}
+.buttons {
+  width: 90%; max-width: 400px; display: grid;
+  grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin: 10px 0;
+}
+.btn {
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; padding: 14px 8px; border-radius: 16px;
+  font-size: 14px; cursor: pointer; text-align: center;
+  transition: all 0.2s; user-select: none;
+}
+.btn:active { transform: scale(0.95); background: rgba(255,255,255,0.25); }
+.btn .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+.sub-menu {
+  width: 90%; max-width: 400px; background: rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 12px; margin: 8px 0;
+  display: none; flex-wrap: wrap; gap: 8px; justify-content: center;
+  backdrop-filter: blur(10px);
+}
+.sub-menu.show { display: flex; }
+.sub-btn {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
+  color: #fff; padding: 8px 14px; border-radius: 12px;
+  font-size: 13px; cursor: pointer; user-select: none;
+}
+.sub-btn:active { background: rgba(255,255,255,0.25); }
+.coins { color: #ffd32a; }
+.setup {
+  width: 90%; max-width: 400px; text-align: center; margin-top: 40px;
+}
+.setup h2 { margin-bottom: 20px; }
+.pet-choices {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin: 20px 0;
+}
+.pet-choice {
+  background: rgba(255,255,255,0.1); border: 2px solid transparent;
+  border-radius: 16px; padding: 16px 8px; cursor: pointer;
+  transition: all 0.2s; text-align: center;
+}
+.pet-choice:active, .pet-choice.selected {
+  border-color: #ffd32a; background: rgba(255,215,42,0.15);
+}
+.pet-choice .emoji { font-size: 40px; }
+.pet-choice .label { font-size: 13px; margin-top: 4px; }
+.name-input {
+  width: 80%; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);
+  color: #fff; font-size: 16px; text-align: center; margin: 10px 0;
+  outline: none;
+}
+.name-input::placeholder { color: rgba(255,255,255,0.4); }
+.start-btn {
+  background: linear-gradient(135deg, #ffd32a, #ff6b6b);
+  color: #1a1a2e; border: none; padding: 14px 40px;
+  border-radius: 16px; font-size: 18px; font-weight: bold;
+  cursor: pointer; margin-top: 10px;
+}
+.start-btn:active { transform: scale(0.96); }
+.hearts {
+  position: absolute; pointer-events: none;
+  font-size: 20px; animation: floatUp 1s ease-out forwards;
+}
+@keyframes floatUp {
+  0% { opacity:1; transform: translateY(0) scale(1); }
+  100% { opacity:0; transform: translateY(-60px) scale(1.5); }
+}
+.zzz {
+  position: absolute; top: 10px; right: 20px;
+  font-size: 24px; animation: zzz 2s ease-in-out infinite;
+}
+@keyframes zzz {
+  0%,100% { opacity:0.3; transform: translateY(0); }
+  50% { opacity:1; transform: translateY(-10px); }
+}
+</style>
+</head>
+<body>
+
+<div class="header"><span>🐾</span> Buddy 宠物系统 <span>🐾</span></div>
+
+<!-- 创建宠物 -->
+<div class="setup" id="setup">
+  <h2>选择你的宠物</h2>
+  <div class="pet-choices" id="petChoices"></div>
+  <input class="name-input" id="nameInput" placeholder="给宠物起个名字..." maxlength="10">
+  <br>
+  <button class="start-btn" onclick="createPet()">开始冒险！🎉</button>
+</div>
+
+<!-- 宠物主界面 -->
+<div id="game" style="display:none; width:100%; display:none; flex-direction:column; align-items:center;">
+  <div class="pet-area" id="petArea">
+    <div class="pet-name" id="petName"></div>
+    <div class="pet-info" id="petInfo"></div>
+    <div class="pet-display" id="petDisplay" onclick="petPet()"></div>
+    <div class="speech" id="speech">点击宠物来互动！</div>
+    <div class="level-area">
+      <div>⭐ 等级 <span id="lvl">1</span></div>
+      <div>✨ 经验 <span id="exp">0</span></div>
+      <div class="coins">🪙 <span id="coins">50</span></div>
+      <div id="moodDisplay">😐 普通</div>
+    </div>
+    <div class="stats">
+      <div class="stat-row">
+        <span class="stat-label">饱腹</span>
+        <div class="stat-bar"><div class="stat-fill hunger-fill" id="hungerBar" style="width:50%"></div></div>
+        <span class="stat-val" id="hungerVal">50</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">快乐</span>
+        <div class="stat-bar"><div class="stat-fill happy-fill" id="happyBar" style="width:50%"></div></div>
+        <span class="stat-val" id="happyVal">50</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">体力</span>
+        <div class="stat-bar"><div class="stat-fill energy-fill" id="energyBar" style="width:80%"></div></div>
+        <span class="stat-val" id="energyVal">80</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">健康</span>
+        <div class="stat-bar"><div class="stat-fill health-fill" id="healthBar" style="width:100%"></div></div>
+        <span class="stat-val" id="healthVal">100</span>
+      </div>
+    </div>
+    <div class="pet-info">阶段: <span id="stage">蛋</span> | 互动: <span id="interactions">0</span>次</div>
+  </div>
+
+  <div class="buttons">
+    <div class="btn" onclick="toggleMenu('foodMenu')"><span class="icon">🍖</span>喂食</div>
+    <div class="btn" onclick="toggleMenu('gameMenu')"><span class="icon">🎮</span>玩耍</div>
+    <div class="btn" onclick="petPet()"><span class="icon">🤚</span>抚摸</div>
+    <div class="btn" onclick="toggleSleep()"><span class="icon">💤</span>睡觉</div>
+    <div class="btn" onclick="encourage()"><span class="icon">💬</span>鼓励</div>
+    <div class="btn" onclick="savePet()"><span class="icon">💾</span>保存</div>
+  </div>
+
+  <div class="sub-menu" id="foodMenu"></div>
+  <div class="sub-menu" id="gameMenu"></div>
+</div>
+
+<script>
+const PETS = {
+  "猫":    { emoji: "🐱", trait: "独立" },
+  "狗":    { emoji: "🐶", trait: "忠诚" },
+  "兔子":  { emoji: "🐰", trait: "温柔" },
+  "龙":    { emoji: "🐲", trait: "神秘" },
+  "狐狸":  { emoji: "🦊", trait: "聪明" },
+  "熊猫":  { emoji: "🐼", trait: "可爱" },
+};
+const FOOD = {
+  "苹果🍎": {h:10, hp:2, p:5},
+  "鱼🐟":   {h:20, hp:5, p:10},
+  "蛋糕🍰": {h:15, hp:10, p:15},
+  "牛奶🥛": {h:8, hp:3, p:3},
+  "牛排🥩": {h:30, hp:8, p:25},
+  "沙拉🥗": {h:12, hp:4, p:8},
+};
+const GAMES = {
+  "捉迷藏🙈": {hp:15, en:-10},
+  "接球⚾":   {hp:10, en:-8},
+  "跑步🏃":   {hp:8, en:-15},
+  "拼图🧩":   {hp:12, en:-5},
+  "唱歌🎤":   {hp:20, en:-3},
+};
+const STAGES = [[0,"蛋🥚"],[10,"幼年🐣"],[50,"少年🌱"],[150,"青年🌿"],[300,"成年🌳"]];
+const TIPS = [
+  "加油！你很棒！💪","bug只是还没变成feature~","休息一下吧！👀",
+  "记得喝水！🥤","每一步都是进步！📈","相信自己！🌟",
+  "你是最棒的！🏆","元气满满！🌈","困了就休息！😴","我一直陪着你！❤️",
+  "你笑起来真好看！😊","今天也要开开心心的！🎈","摸摸头，辛苦啦！🤗",
+];
+const REACTIONS = [
+  "蹭了蹭你的手","开心地转圈圈","对你眨眨眼","跳到你怀里",
+  "舔了舔你的脸","发出满足的声音","摇了摇尾巴","在你腿上打滚",
+];
+
+let pet = null;
+let openMenu = null;
+
+function clamp(v) { return Math.max(0, Math.min(100, v)); }
+
+function initChoices() {
+  const c = document.getElementById('petChoices');
+  for (let [k,v] of Object.entries(PETS)) {
+    const d = document.createElement('div');
+    d.className = 'pet-choice';
+    d.innerHTML = '<div class="emoji">' + v.emoji + '</div><div class="label">' + k + '-' + v.trait + '</div>';
+    d.onclick = function() {
+      document.querySelectorAll('.pet-choice').forEach(x => x.classList.remove('selected'));
+      d.classList.add('selected');
+      d.dataset.type = k;
+    };
+    c.appendChild(d);
+  }
+  // init food menu
+  const fm = document.getElementById('foodMenu');
+  for (let [k,v] of Object.entries(FOOD)) {
+    const b = document.createElement('div');
+    b.className = 'sub-btn';
+    b.textContent = k + ' ¥' + v.p;
+    b.onclick = function() { feed(k); };
+    fm.appendChild(b);
+  }
+  // init game menu
+  const gm = document.getElementById('gameMenu');
+  for (let [k,v] of Object.entries(GAMES)) {
+    const b = document.createElement('div');
+    b.className = 'sub-btn';
+    b.textContent = k;
+    b.onclick = function() { play(k); };
+    gm.appendChild(b);
+  }
+  // load save
+  const save = localStorage.getItem('buddy_pet');
+  if (save) {
+    pet = JSON.parse(save);
+    showGame();
+  }
+}
+
+function createPet() {
+  const sel = document.querySelector('.pet-choice.selected');
+  if (!sel) { alert('先选一只宠物！'); return; }
+  const name = document.getElementById('nameInput').value.trim() || '小宝';
+  const type = sel.dataset.type;
+  pet = {
+    name: name, type: type, emoji: PETS[type].emoji, trait: PETS[type].trait,
+    hunger: 50, happy: 50, energy: 80, health: 100,
+    exp: 0, lv: 1, coins: 50, sleeping: false, count: 0, lastTime: Date.now()
+  };
+  showGame();
+  say('🎉 ' + pet.emoji + ' ' + pet.name + ' 诞生了！快来和它玩吧！');
+}
+
+function showGame() {
+  document.getElementById('setup').style.display = 'none';
+  const g = document.getElementById('game');
+  g.style.display = 'flex';
+  updateUI();
+}
+
+function getStage() {
+  let s = STAGES[0][1];
+  for (let [th, nm] of STAGES) { if (pet.exp >= th) s = nm; }
+  return s;
+}
+
+function getMood() {
+  if (pet.sleeping) return "💤 睡觉中";
+  if (pet.energy < 20) return "😴 困倦";
+  if (pet.hunger < 20) return "😫 饥饿";
+  if (pet.happy > 80) return "🤩 兴奋";
+  if (pet.happy > 50) return "😊 开心";
+  if (pet.happy < 30) return "😢 难过";
+  return "😐 普通";
+}
+
+function updateUI() {
+  document.getElementById('petName').textContent = pet.emoji + ' ' + pet.name;
+  document.getElementById('petInfo').textContent = pet.type + ' | 性格: ' + pet.trait;
+  document.getElementById('petDisplay').textContent = pet.emoji;
+  document.getElementById('petDisplay').className = 'pet-display' + (pet.sleeping ? ' sleeping' : '');
+  document.getElementById('lvl').textContent = pet.lv;
+  document.getElementById('exp').textContent = pet.exp;
+  document.getElementById('coins').textContent = pet.coins;
+  document.getElementById('moodDisplay').textContent = getMood();
+  document.getElementById('stage').textContent = getStage();
+  document.getElementById('interactions').textContent = pet.count;
+  document.getElementById('hungerBar').style.width = pet.hunger + '%';
+  document.getElementById('hungerVal').textContent = pet.hunger;
+  document.getElementById('happyBar').style.width = pet.happy + '%';
+  document.getElementById('happyVal').textContent = pet.happy;
+  document.getElementById('energyBar').style.width = pet.energy + '%';
+  document.getElementById('energyVal').textContent = pet.energy;
+  document.getElementById('healthBar').style.width = pet.health + '%';
+  document.getElementById('healthVal').textContent = pet.health;
+  // zzz
+  let oldZzz = document.querySelector('.zzz');
+  if (oldZzz) oldZzz.remove();
+  if (pet.sleeping) {
+    let z = document.createElement('div');
+    z.className = 'zzz'; z.textContent = '💤';
+    document.getElementById('petArea').appendChild(z);
+  }
+}
+
+function say(msg) {
+  document.getElementById('speech').textContent = msg;
+}
+
+function gainExp(amount) {
+  pet.exp += amount;
+  let oldLv = pet.lv;
+  pet.lv = 1 + Math.floor(pet.exp / 30);
+  let msg = '';
+  if (pet.lv > oldLv) msg += ' 🎉升级了！等级' + pet.lv;
+  return msg;
+}
+
+function floatHeart(emoji) {
+  let h = document.createElement('div');
+  h.className = 'hearts';
+  h.textContent = emoji || '❤️';
+  let area = document.getElementById('petDisplay');
+  h.style.left = (Math.random() * 60 + 20) + '%';
+  h.style.top = '30%';
+  document.getElementById('petArea').appendChild(h);
+  setTimeout(() => h.remove(), 1000);
+}
+
+function toggleMenu(id) {
+  let m = document.getElementById(id);
+  if (openMenu && openMenu !== id) {
+    document.getElementById(openMenu).classList.remove('show');
+  }
+  m.classList.toggle('show');
+  openMenu = m.classList.contains('show') ? id : null;
+}
+
+function feed(foodName) {
+  if (pet.sleeping) { say(pet.name + '在睡觉，别打扰它！💤'); return; }
+  let f = FOOD[foodName];
+  if (pet.coins < f.p) { say('金币不够！需要' + f.p + '，当前' + pet.coins + '🪙'); return; }
+  pet.coins -= f.p;
+  pet.hunger = clamp(pet.hunger + f.h);
+  pet.happy = clamp(pet.happy + f.hp);
+  pet.count++;
+  let extra = gainExp(5);
+  say(pet.emoji + pet.name + '吃了' + foodName + '！饱腹+' + f.h + ' 快乐+' + f.hp + extra);
+  floatHeart(foodName.slice(-2));
+  updateUI();
+}
+
+function play(gameName) {
+  if (pet.sleeping) { say(pet.name + '在睡觉！💤'); return; }
+  if (pet.energy < 10) { say(pet.name + '太累了，先休息吧！😫'); return; }
+  let g = GAMES[gameName];
+  let reward = Math.floor(Math.random() * 10) + 3;
+  pet.happy = clamp(pet.happy + g.hp);
+  pet.energy = clamp(pet.energy + g.en);
+  pet.coins += reward;
+  pet.count++;
+  let extra = gainExp(8);
+  say(pet.emoji + pet.name + '玩了' + gameName + '！快乐+' + g.hp + ' +' + reward + '🪙' + extra);
+  floatHeart('🎮');
+  updateUI();
+}
+
+function petPet() {
+  if (pet.sleeping) {
+    pet.happy = clamp(pet.happy + 3);
+    say(pet.emoji + '你轻轻摸了摸' + pet.name + '，它在梦中微笑了...');
+    floatHeart('💕');
+    updateUI();
+    return;
+  }
+  pet.happy = clamp(pet.happy + 8);
+  pet.count++;
+  gainExp(3);
+  let r = REACTIONS[Math.floor(Math.random() * REACTIONS.length)];
+  say(pet.emoji + pet.name + r + '！快乐+8');
+  floatHeart();
+  updateUI();
+}
+
+function toggleSleep() {
+  if (pet.sleeping) {
+    pet.sleeping = false;
+    say(pet.emoji + pet.name + '醒了！精神满满！☀️');
+  } else {
+    pet.sleeping = true;
+    pet.energy = clamp(pet.energy + 30);
+    pet.health = clamp(pet.health + 10);
+    say(pet.emoji + pet.name + '睡着了...💤 体力+30 健康+10');
+  }
+  updateUI();
+}
+
+function encourage() {
+  let tip = TIPS[Math.floor(Math.random() * TIPS.length)];
+  say('💬 ' + pet.name + '说: ' + tip);
+  floatHeart('✨');
+}
+
+function savePet() {
+  localStorage.setItem('buddy_pet', JSON.stringify(pet));
+  say('💾 已保存！下次打开还在哦！');
+}
+
+// 自动衰减
+setInterval(function() {
+  if (!pet || pet.sleeping) return;
+  pet.hunger = clamp(pet.hunger - 1);
+  pet.happy = clamp(pet.happy - 1);
+  if (pet.hunger < 10) pet.health = clamp(pet.health - 1);
+  updateUI();
+}, 30000);
+
+// 自动保存
+setInterval(function() {
+  if (pet) localStorage.setItem('buddy_pet', JSON.stringify(pet));
+}, 60000);
+
+initChoices();
+</script>
+</body>
+</html>
